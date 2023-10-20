@@ -24,25 +24,173 @@ extern void Motors_Dashboard_Init ()
 	LCD_WriteString("STE.");
 }
 
+static u8 DcMotorSpeed = 0;
+static u8 DcMotorSpeed_POTONTIOMETER_previous = 0;
+static u8 DcMotorSpeed_POTONTIOMETER_present = 0;
+static s16 DcMotorSpeed_keypad_previous = 0;
+static s16 DcMotorSpeed_keypad_present = 0;
+static double servoAngle = 0;
+static u8 ServoAngle_POTONTIOMETER_previous = 0;
+static u8 ServoAngle_POTONTIOMETER_present = 0;
+static s16 ServoAngle_keypad_previous = 0;
+static s16 ServoAngle_keypad_present = 0;
+static s16 stepperAngle = 30;
+static s16 StepperAngle_keypad_previous = 0;
+static s16 StepperAngle_keypad_present = 0;
+
 extern void Motors_Dashboard_Run ()
 {
-	u8 DcMotorSpeed = POTONTIOMETER_DcMotor ();
+	DcMotorSpeed_POTONTIOMETER_present = POTONTIOMETER_DcMotor ();
+	if (DcMotorSpeed_POTONTIOMETER_present != DcMotorSpeed_POTONTIOMETER_previous)
+	{
+		DcMotorSpeed = DcMotorSpeed_POTONTIOMETER_present;
+		DcMotorSpeed_POTONTIOMETER_previous = DcMotorSpeed_POTONTIOMETER_present;
+	}
+	
+	if (DcMotorSpeed_keypad_present != DcMotorSpeed_keypad_previous)
+	{
+		if (DcMotorSpeed_keypad_present >= 0 && DcMotorSpeed_keypad_present <= 100)
+		{
+			DcMotorSpeed = DcMotorSpeed_keypad_present;
+			DcMotorSpeed_keypad_previous = DcMotorSpeed_keypad_present;
+		}
+	}
+	
 	MOTOR1_Forward(DcMotorSpeed);
 	LCD_GoTo(1, 0);
 	LCD_WriteNumber_4Digit((u16)DcMotorSpeed);
 	
-	double servoAngle = POTONTIOMETER_Servo ();
+	
+	ServoAngle_POTONTIOMETER_present = POTONTIOMETER_DcMotor ();
+	if (ServoAngle_POTONTIOMETER_present != ServoAngle_POTONTIOMETER_previous)
+	{
+		servoAngle = ServoAngle_POTONTIOMETER_present;
+		ServoAngle_POTONTIOMETER_previous = ServoAngle_POTONTIOMETER_present;
+	}
+	
+	if (ServoAngle_keypad_present != ServoAngle_keypad_previous)
+	{
+		if (ServoAngle_keypad_present >= -90 && DcMotorSpeed_keypad_present <= 90)
+		{
+			servoAngle = ServoAngle_keypad_present;
+			ServoAngle_keypad_previous = ServoAngle_keypad_present;
+		}
+	}
+
 	SERVO_setAngle (servoAngle);
 	LCD_GoTo(1, 6);
 	LCD_WriteNumber_4Digit((u16)servoAngle);
 	
-	u16 stepperAngle = 30;
-	STEPPER (stepperAngle);
+	
+	if (StepperAngle_keypad_present != StepperAngle_keypad_previous)
+	{
+			stepperAngle = StepperAngle_keypad_present;
+			StepperAngle_keypad_previous = StepperAngle_keypad_present;
+			STEPPER (stepperAngle);
+			stepperAngle = 0;
+	}
+	
 	LCD_GoTo(1, 12);
-	LCD_WriteNumber_4Digit((u16)stepperAngle);
+	LCD_WriteNumber_4Digit((u16)StepperAngle_keypad_present);
+	
+	Motors_Dashboard_GetValue ();
 }
 
 static double POTONTIOMETER_Servo ()
 {
 	return (POTONTIOMETER2 () * 180.0) / 100.0 - 90.0;
+}
+
+static void Motors_Dashboard_GetValue ()
+{
+	u8 firstkey = KEYPAD_GetKey();
+	
+	u8 value[5] = {0};
+	u8 valueIndex = 0;
+	
+	s16 number = 0;
+	
+	if ( firstkey == '1' || firstkey == '2' || firstkey == '3')
+	{
+		if (firstkey == '1')
+		{
+			LCD_GoToClear( 1, 0, 4);
+		}
+		else if (firstkey == '2')
+		{
+			LCD_GoToClear( 1, 6, 4);
+		}
+		else if (firstkey == '3')
+		{
+			LCD_GoToClear( 1, 12, 4);
+		}
+		
+		u8 key;
+		
+		while (valueIndex <= 4 && value[valueIndex] != '=')
+		{
+			key = KEYPAD_GetKey();
+			
+			if (key != NULL)
+			{
+				value[valueIndex] = key;
+				
+				if (valueIndex <= 3)
+				{
+					LCD_WriteChar(key);
+					
+					if (value[valueIndex] >= '0' && value[valueIndex] <= '9')
+					{
+						number = number * 10 + (value[valueIndex] - '0');
+					}
+				}
+				
+				if (value[valueIndex] != '=')
+				{
+					valueIndex++;
+				}
+			}	
+			
+			if (key == 'C')
+			{
+				LCD_GoToClear( 1, 0, 4);
+				value[1] = 0;
+				value[2] = 0;
+				value[3] = 0;
+				value[4] = 0;
+				valueIndex = 0;
+			}
+			
+			if (value[0] == 'C')
+			{
+				break;
+			}	
+		}
+		
+		if (value[valueIndex] == '=')
+		{
+			if (value[0] == '-')
+			{
+				number = -number;
+			}
+			
+			
+			if (firstkey == '1')
+			{
+				DcMotorSpeed_keypad_present = number;
+			}
+			else if (firstkey == '2')
+			{
+				ServoAngle_keypad_present = number;
+			}
+			else if (firstkey == '3')
+			{
+				StepperAngle_keypad_present = number;
+			}
+	
+			number = 0;
+		}
+		
+		value[valueIndex] = NULL;	
+	}
 }

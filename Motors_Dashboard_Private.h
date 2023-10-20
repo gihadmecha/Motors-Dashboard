@@ -5,6 +5,7 @@
 
 static double POTONTIOMETER_Servo ();
 
+static void Motors_Dashboard_GetValue ();
 
 
 #endif /* MOTORS_DASHBOARD_PRIVATE_H_ */
