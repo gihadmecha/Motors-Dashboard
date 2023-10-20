@@ -6,6 +6,7 @@
 
 #include "MOTOR.h"
 #include "SERVO.h"
+#include "STEPPER_MOTOR.h"
 #include "POTONTIOMETER.h"
 #include "LCD.h"
 #include "KEYPAD.h"
