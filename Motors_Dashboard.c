@@ -29,17 +29,18 @@ static u8 DcMotorSpeed_POTONTIOMETER_previous = 0;
 static u8 DcMotorSpeed_POTONTIOMETER_present = 0;
 static s16 DcMotorSpeed_keypad_previous = 0;
 static s16 DcMotorSpeed_keypad_present = 0;
-static double servoAngle = 0;
-static u8 ServoAngle_POTONTIOMETER_previous = 0;
-static u8 ServoAngle_POTONTIOMETER_present = 0;
+static s16 servoAngle = 0;
+static s16 ServoAngle_POTONTIOMETER_previous = 0;
+static s16 ServoAngle_POTONTIOMETER_present = 0;
 static s16 ServoAngle_keypad_previous = 0;
 static s16 ServoAngle_keypad_present = 0;
-static s16 stepperAngle = 30;
-static s16 StepperAngle_keypad_previous = 0;
-static s16 StepperAngle_keypad_present = 0;
+static s32 stepperAngle = 0;
+static s32 StepperAngle_keypad_present = 0;
 
 extern void Motors_Dashboard_Run ()
 {
+	Motors_Dashboard_keypadGetValue ();
+	
 	DcMotorSpeed_POTONTIOMETER_present = POTONTIOMETER_DcMotor ();
 	if (DcMotorSpeed_POTONTIOMETER_present != DcMotorSpeed_POTONTIOMETER_previous)
 	{
@@ -61,39 +62,56 @@ extern void Motors_Dashboard_Run ()
 	LCD_WriteNumber_4Digit((u16)DcMotorSpeed);
 	
 	
-	ServoAngle_POTONTIOMETER_present = POTONTIOMETER_DcMotor ();
+	ServoAngle_POTONTIOMETER_present = POTONTIOMETER_Servo ();
 	if (ServoAngle_POTONTIOMETER_present != ServoAngle_POTONTIOMETER_previous)
 	{
 		servoAngle = ServoAngle_POTONTIOMETER_present;
 		ServoAngle_POTONTIOMETER_previous = ServoAngle_POTONTIOMETER_present;
+		LCD_GoToClear(1, 6, 4);
 	}
 	
 	if (ServoAngle_keypad_present != ServoAngle_keypad_previous)
 	{
-		if (ServoAngle_keypad_present >= -90 && DcMotorSpeed_keypad_present <= 90)
+		if (ServoAngle_keypad_present >= -90 && ServoAngle_keypad_present <= 90)
 		{
 			servoAngle = ServoAngle_keypad_present;
 			ServoAngle_keypad_previous = ServoAngle_keypad_present;
+			
+			LCD_GoToClear(1, 6, 4);
 		}
 	}
 
 	SERVO_setAngle (servoAngle);
 	LCD_GoTo(1, 6);
-	LCD_WriteNumber_4Digit((u16)servoAngle);
-	
-	
-	if (StepperAngle_keypad_present != StepperAngle_keypad_previous)
+	if (servoAngle >= 0)
 	{
-			stepperAngle = StepperAngle_keypad_present;
-			StepperAngle_keypad_previous = StepperAngle_keypad_present;
-			STEPPER (stepperAngle);
-			stepperAngle = 0;
+		LCD_WriteNumber_4Digit((u16)servoAngle);
+	}
+	else
+	{
+		LCD_WriteNumber((s32)servoAngle);
 	}
 	
-	LCD_GoTo(1, 12);
-	LCD_WriteNumber_4Digit((u16)StepperAngle_keypad_present);
 	
-	Motors_Dashboard_GetValue ();
+	if (StepperAngle_keypad_present != 0)
+	{
+		stepperAngle = StepperAngle_keypad_present;
+		STEPPER (stepperAngle); 
+			
+		StepperAngle_keypad_present = 0;
+		LCD_GoToClear(1, 12, 4);
+	}
+	
+	if (stepperAngle >= 0)
+	{
+		LCD_GoTo(1, 12);
+		LCD_WriteNumber_4Digit((u16)stepperAngle);
+	}
+	else
+	{
+		LCD_GoTo(1, 12);
+		LCD_WriteNumber((s32)stepperAngle);
+	}
 }
 
 static double POTONTIOMETER_Servo ()
@@ -101,14 +119,14 @@ static double POTONTIOMETER_Servo ()
 	return (POTONTIOMETER2 () * 180.0) / 100.0 - 90.0;
 }
 
-static void Motors_Dashboard_GetValue ()
+static void Motors_Dashboard_keypadGetValue ()
 {
 	u8 firstkey = KEYPAD_GetKey();
 	
 	u8 value[5] = {0};
 	u8 valueIndex = 0;
 	
-	s16 number = 0;
+	s32 number = 0;
 	
 	if ( firstkey == '1' || firstkey == '2' || firstkey == '3')
 	{
@@ -135,7 +153,7 @@ static void Motors_Dashboard_GetValue ()
 			{
 				value[valueIndex] = key;
 				
-				if (valueIndex <= 3)
+				if ( valueIndex <= 3 &&  ( (value[valueIndex] >= '0' && value[valueIndex] <= '9') || (value[valueIndex] == '-') ) )
 				{
 					LCD_WriteChar(key);
 					
