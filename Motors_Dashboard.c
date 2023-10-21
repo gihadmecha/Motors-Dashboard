@@ -35,7 +35,14 @@ static s16 ServoAngle_POTONTIOMETER_present = 0;
 static s16 ServoAngle_keypad_previous = 0;
 static s16 ServoAngle_keypad_present = 0;
 static s32 stepperAngle = 0;
-static s32 StepperAngle_keypad_present = 0;
+static s32 Stepper_position = 0;
+
+static u8 firstkey = 0;
+
+static u8 value[6] = {0};
+static u8 valueIndex = 0;
+
+static s32 number = 0;
 
 extern void Motors_Dashboard_Run ()
 {
@@ -58,16 +65,23 @@ extern void Motors_Dashboard_Run ()
 	}
 	
 	MOTOR1_Forward(DcMotorSpeed);
-	LCD_GoTo(1, 0);
-	LCD_WriteNumber_4Digit((u16)DcMotorSpeed);
 	
+	if (firstkey != '1')
+	{
+		LCD_GoTo(1, 0);
+		LCD_WriteNumber_4Digit((u16)DcMotorSpeed);
+	}
 	
 	ServoAngle_POTONTIOMETER_present = POTONTIOMETER_Servo ();
 	if (ServoAngle_POTONTIOMETER_present != ServoAngle_POTONTIOMETER_previous)
 	{
 		servoAngle = ServoAngle_POTONTIOMETER_present;
 		ServoAngle_POTONTIOMETER_previous = ServoAngle_POTONTIOMETER_present;
-		LCD_GoToClear(1, 6, 4);
+		
+		if (firstkey != '2')
+		{
+			LCD_GoToClear(1, 6, 4);
+		}
 	}
 	
 	if (ServoAngle_keypad_present != ServoAngle_keypad_previous)
@@ -82,70 +96,82 @@ extern void Motors_Dashboard_Run ()
 	}
 
 	SERVO_setAngle (servoAngle);
-	LCD_GoTo(1, 6);
-	if (servoAngle >= 0)
+	
+	if (firstkey != '2')
 	{
-		LCD_WriteNumber_4Digit((u16)servoAngle);
-	}
-	else
-	{
-		LCD_WriteNumber((s32)servoAngle);
+		LCD_GoTo(1, 6);
+		if (servoAngle >= 0)
+		{
+			LCD_WriteNumber_4Digit((u16)servoAngle);
+		}
+		else
+		{
+			LCD_WriteNumber((s32)servoAngle);
+		}
 	}
 	
 	
-	if (StepperAngle_keypad_present != 0)
-	{
-		stepperAngle = StepperAngle_keypad_present;
+	//if (StepperAngle_keypad_present != 0)
+	//{
+		//stepperAngle = StepperAngle_keypad_present;
 		STEPPER (stepperAngle); 
+		Stepper_position += stepperAngle;
 			
-		StepperAngle_keypad_present = 0;
-		LCD_GoToClear(1, 12, 4);
+		//StepperAngle_keypad_present = 0;
+		//LCD_GoToClear(1, 12, 4);
+	//}
+	
+	if (firstkey != '3')
+	{
+		if (Stepper_position >= 0)
+		{
+			LCD_GoTo(1, 12);
+			LCD_WriteNumber_4Digit((u16)Stepper_position);
+		}
+		else
+		{
+			LCD_GoTo(1, 12);
+			LCD_WriteNumber((s32)Stepper_position);
+		}
 	}
 	
-	if (stepperAngle >= 0)
-	{
-		LCD_GoTo(1, 12);
-		LCD_WriteNumber_4Digit((u16)stepperAngle);
-	}
-	else
-	{
-		LCD_GoTo(1, 12);
-		LCD_WriteNumber((s32)stepperAngle);
-	}
+	stepperAngle = 0;
 }
+
 
 static double POTONTIOMETER_Servo ()
 {
 	return (POTONTIOMETER2 () * 180.0) / 100.0 - 90.0;
 }
 
+
 static void Motors_Dashboard_keypadGetValue ()
 {
-	u8 firstkey = KEYPAD_GetKey();
-	
-	u8 value[5] = {0};
-	u8 valueIndex = 0;
-	
-	s32 number = 0;
-	
-	if ( firstkey == '1' || firstkey == '2' || firstkey == '3')
+	if (firstkey == 0)
 	{
-		if (firstkey == '1')
-		{
-			LCD_GoToClear( 1, 0, 4);
-		}
-		else if (firstkey == '2')
-		{
-			LCD_GoToClear( 1, 6, 4);
-		}
-		else if (firstkey == '3')
-		{
-			LCD_GoToClear( 1, 12, 4);
-		}
+		firstkey = KEYPAD_GetKey();
 		
+		if ( firstkey == '1' || firstkey == '2' || firstkey == '3')
+		{
+			if (firstkey == '1')
+			{
+				LCD_GoToClear( 1, 0, 4);
+			}
+			else if (firstkey == '2')
+			{
+				LCD_GoToClear( 1, 6, 4);
+			}
+			else if (firstkey == '3')
+			{
+				LCD_GoToClear( 1, 12, 4);
+			}
+		}
+	}
+	else
+	{
 		u8 key;
 		
-		while (valueIndex <= 4 && value[valueIndex] != '=')
+		if (valueIndex <= 4 && value[valueIndex] != '=')
 		{
 			key = KEYPAD_GetKey();
 			
@@ -155,7 +181,20 @@ static void Motors_Dashboard_keypadGetValue ()
 				
 				if ( valueIndex <= 3 &&  ( (value[valueIndex] >= '0' && value[valueIndex] <= '9') || (value[valueIndex] == '-') ) )
 				{
-					LCD_WriteChar(key);
+					if (firstkey == '1')
+					{
+						LCD_GoTo(1, valueIndex);
+					}
+					else if (firstkey == '2')
+					{
+						LCD_GoTo(1, 6 + valueIndex);
+					}
+					else if (firstkey == '3')
+					{
+						LCD_GoTo(1, 12 + valueIndex);
+					}
+					
+					LCD_WriteChar(value[valueIndex]);
 					
 					if (value[valueIndex] >= '0' && value[valueIndex] <= '9')
 					{
@@ -167,48 +206,133 @@ static void Motors_Dashboard_keypadGetValue ()
 				{
 					valueIndex++;
 				}
-			}	
+			}
 			
 			if (key == 'C')
 			{
-				LCD_GoToClear( 1, 0, 4);
+				if (firstkey == '1')
+				{
+					LCD_GoToClear( 1, 0, 4);
+				}
+				else if (firstkey == '2')
+				{
+					LCD_GoToClear( 1, 6, 4);
+				}
+				else if (firstkey == '3')
+				{
+					LCD_GoToClear( 1, 12, 4);
+				}
+				
 				value[1] = 0;
 				value[2] = 0;
 				value[3] = 0;
 				value[4] = 0;
 				valueIndex = 0;
+				
+				number = 0;
 			}
 			
 			if (value[0] == 'C')
 			{
-				break;
-			}	
-		}
-		
-		if (value[valueIndex] == '=')
-		{
-			if (value[0] == '-')
-			{
-				number = -number;
+				value[0] = 0;
+				value[1] = 0;
+				value[2] = 0;
+				value[3] = 0;
+				value[4] = 0;
+				valueIndex = 0;
+				
+				
+				if (firstkey == '1')
+				{
+					number = DcMotorSpeed;
+					LCD_GoToClear(1, 0, 4);
+				}
+				else if (firstkey == '2')
+				{
+					number = servoAngle;
+					LCD_GoToClear(1, 6, 4);
+				}
+				else if (firstkey == '3')
+				{
+					number = stepperAngle;
+					LCD_GoToClear(1, 12, 4);
+				}
+				
+				number = 0;
+				
+				firstkey = 0;
 			}
 			
+			if (value[valueIndex] == '=')
+			{
+				if (value[0] == '-')
+				{
+					number = -number;
+				}
+				
+				if (firstkey == '1')
+				{
+					DcMotorSpeed_keypad_present = number;
+				}
+				else if (firstkey == '2')
+				{
+					ServoAngle_keypad_present = number;
+				}
+				else if (firstkey == '3')
+				{
+					stepperAngle = number;
+				}
+				
+				value[0] = 0;
+				value[1] = 0;
+				value[2] = 0;
+				value[3] = 0;
+				value[4] = 0;
+				valueIndex = 0;
+				
+				number = 0;
+				
+				if (firstkey == '1')
+				{
+					LCD_GoToClear(1, 0, 4);
+				}
+				else if (firstkey == '2')
+				{
+					LCD_GoToClear(1, 6, 4);
+				}
+				else if (firstkey == '3')
+				{
+					LCD_GoToClear(1, 12, 4);
+				}
+				
+				firstkey = 0;
+			}
 			
-			if (firstkey == '1')
+			if (valueIndex == 5)
 			{
-				DcMotorSpeed_keypad_present = number;
+				value[1] = 0;
+				value[2] = 0;
+				value[3] = 0;
+				value[4] = 0;
+				valueIndex = 0;
+				
+				number = 0;
+				
+				if (firstkey == '1')
+				{
+					LCD_GoToClear(1, 0, 4);
+				}
+				else if (firstkey == '2')
+				{
+					LCD_GoToClear(1, 6, 4);
+				}
+				else if (firstkey == '3')
+				{
+					LCD_GoToClear(1, 12, 4);
+				}
+				
+				firstkey = 0;
 			}
-			else if (firstkey == '2')
-			{
-				ServoAngle_keypad_present = number;
-			}
-			else if (firstkey == '3')
-			{
-				StepperAngle_keypad_present = number;
-			}
-	
-			number = 0;
 		}
-		
-		value[valueIndex] = NULL;	
 	}
 }
