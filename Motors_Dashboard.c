@@ -27,8 +27,8 @@ extern void Motors_Dashboard_Init ()
 static u8 DcMotorSpeed = 0;
 static u8 DcMotorSpeed_POTONTIOMETER_previous = 0;
 static u8 DcMotorSpeed_POTONTIOMETER_present = 0;
-static s16 DcMotorSpeed_keypad_previous = 0;
-static s16 DcMotorSpeed_keypad_present = 0;
+static s16 DcMotorSpeed_keypad_previous = -1;
+static s16 DcMotorSpeed_keypad_present = -1;
 static s16 servoAngle = 0;
 static s16 ServoAngle_POTONTIOMETER_previous = 0;
 static s16 ServoAngle_POTONTIOMETER_present = 0;
@@ -108,18 +108,11 @@ extern void Motors_Dashboard_Run ()
 		{
 			LCD_WriteNumber((s32)servoAngle);
 		}
-	}
+	}	
 	
-	
-	//if (StepperAngle_keypad_present != 0)
-	//{
-		//stepperAngle = StepperAngle_keypad_present;
-		STEPPER (stepperAngle); 
-		Stepper_position += stepperAngle;
-			
-		//StepperAngle_keypad_present = 0;
-		//LCD_GoToClear(1, 12, 4);
-	//}
+
+	STEPPER (stepperAngle); 
+	Stepper_position += stepperAngle;
 	
 	if (firstkey != '3')
 	{
