@@ -2,10 +2,10 @@
 
 https://github.com/gihadmecha/Motors_Dashboard/assets/19871755/1bcff326-e503-44e0-bec8-fb4a5e4b3184
 
-## a motor control system to manage three distinct motor types: 
+## A motor control system to manage three distinct motor types: 
 - DC. Motor: control the speed and direction
-- Servo Motor: adjust the angle of movement using sliders and a keypad inputs.
-- Stepper Motor: adjust the angle of movement using a keypad inputs.
+- Servo Motor: adjust the angle of movement using sliders and keypad inputs.
+- Stepper Motor: adjust the angle of movement using keypad inputs.
 
 Demo: https://youtu.be/F0MZDpFwPa4?si=d4doy2_HZ9v1Cer3
  
