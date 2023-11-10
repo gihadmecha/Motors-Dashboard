@@ -27,16 +27,11 @@ Demo: https://youtu.be/F0MZDpFwPa4?si=d4doy2_HZ9v1Cer3
 - DIO
 
 ## Make sure you have installed
-- ATMEG32 MCAL layer:
-  https://github.com/gihadmecha/Embedded_Systems/tree/main/atmega32_ECU/atmega32_ECU/MCAL
-- HAL layer layer:
-  https://github.com/gihadmecha/Embedded_Systems/tree/main/atmega32_ECU/atmega32_ECU/HAL
-- Defined Types:
-  https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/StdTypes.h
-- atmega32 memory map:
-  https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/MemMap.h
-- utilities:
-  https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/UTILS.h
+- [ATMEG32 MCAL layer](https://github.com/gihadmecha/Embedded_Systems/tree/main/atmega32_ECU/atmega32_ECU/MCAL).
+- [HAL layer](https://github.com/gihadmecha/Embedded_Systems/tree/main/atmega32_ECU/atmega32_ECU/HAL).
+- [Defined Data Types](https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/StdTypes.h).
+- [atmega32 memory](https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/MemMap.h).
+- [utilities](https://github.com/gihadmecha/Embedded_Systems/blob/main/atmega32_ECU/atmega32_ECU/UTILS.h).
 
 ## Softwares you should install
 - Microchip Studio for AVR
